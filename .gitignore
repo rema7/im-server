@@ -23,3 +23,6 @@
 out
 gen
 vendor/
+.DS_Store
+Gopkg.lock
+Gopkg.toml

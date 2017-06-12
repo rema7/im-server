@@ -2,14 +2,20 @@
 
 
 [[projects]]
-  branch = "master"
   name = "github.com/gorilla/websocket"
   packages = ["."]
-  revision = "a91eba7f97777409bc2c443f5534d41dd20c5720"
+  revision = "3ab3a8b8831546bd18fd182c20687ca853b2bb13"
+  version = "v1.1.0"
+
+[[projects]]
+  name = "github.com/satori/go.uuid"
+  packages = ["."]
+  revision = "879c5887cd475cd7864858769793b2ceb0d44feb"
+  version = "v1.1.0"
 
 [solve-meta]
   analyzer-name = "dep"
   analyzer-version = 1
-  inputs-digest = "1f00ef38f021a03d354cb81cfedaf387dc995002f612ac0459a08c0270b87750"
+  inputs-digest = "7f2fd052213fbbc4cdd1c65655e3beb2f5181cc67ad66e1085f62c137fd5df60"
   solver-name = "gps-cdcl"
   solver-version = 1

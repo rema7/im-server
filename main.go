@@ -4,36 +4,59 @@ import (
 	"github.com/gorilla/websocket"
 	"log"
 	"net/http"
+	"encoding/json"
+	"github.com/satori/go.uuid"
 )
-
-var clients = make(map[*websocket.Conn]bool) // connected clients
-var broadcast = make(chan Message)           // broadcast channel
-
-
 
 type Hub struct {
 	clients	map[*Client]bool
 	register  chan *Client
 	unregister  chan *Client
+	broadcast  chan []byte
+
 }
 
 func newHub() *Hub {
 	return &Hub{
+		broadcast:  make(chan []byte),
 		clients: make(map[*Client]bool),
 		register:   make(chan *Client),
 		unregister:   make(chan *Client),
 	}
 }
 
-func (h *Hub) run() {
+func (hub *Hub) run() {
 	for {
 		select {
-			case client := <- h.register:
-				h.clients[client] = true
-			case client := <- h.unregister:
-				if _, ok := h.clients[client]; ok {
-					delete(h.clients, client)
+			case client := <- hub.register:
+				hub.clients[client] = true
+				jsonMessage, _ := json.Marshal(&Message{Content: "/A new socket has connected."})
+				hub.send(jsonMessage, client)
+		case conn := <-hub.unregister:
+			if _, ok := hub.clients[conn]; ok {
+				close(conn.send)
+				delete(hub.clients, conn)
+				jsonMessage, _ := json.Marshal(&Message{Content: "/A socket has disconnected."})
+				hub.send(jsonMessage, conn)
+			}
+
+		case message := <-hub.broadcast:
+			for conn := range hub.clients {
+				select {
+				case conn.send <- message:
+				default:
+					close(conn.send)
+					delete(hub.clients, conn)
 				}
+			}
+		}
+	}
+}
+
+func (hub *Hub) send(message []byte, ignore *Client) {
+	for conn := range hub.clients {
+		if conn != ignore {
+			conn.send <- message
 		}
 	}
 }
@@ -52,24 +75,13 @@ func handleConnections(hub *Hub, w http.ResponseWriter, r *http.Request) {
 	}
 
 	log.Println("new connection")
-	client := &Client{hub: hub, conn: conn}
-	client.hub.register <- client
+	client := &Client{id: uuid.NewV4().String(), conn: conn, send: make(chan []byte), hub: hub}
+	hub.register <- client
+	go client.read()
+	go client.write()
 }
 
-func handleMessages() {
-	for {
-		msg := <-broadcast
 
-		for client := range clients {
-			err := client.WriteJSON(msg)
-			if err != nil {
-				log.Printf("error: %v", err)
-				client.Close()
-				delete(clients, client)
-			}
-		}
-	}
-}
 
 func main() {
 	fs := http.FileServer(http.Dir("../public"))
@@ -82,7 +94,7 @@ func main() {
 		handleConnections(hub, w, r)
 	})
 
-	go handleMessages()
+	//go handleMessages()
 
 	log.Println("http server started on :8100")
 
