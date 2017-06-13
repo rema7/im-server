@@ -1,15 +1,11 @@
-package main
+package hub
 
 import (
 	"github.com/gorilla/websocket"
 	"encoding/json"
+	"log"
 )
 
-type Message struct {
-	Sender    string `json:"sender,omitempty"`
-	Recipient string `json:"recipient,omitempty"`
-	Content   string `json:"content,omitempty"`
-}
 
 type Client struct {
 	id     string
@@ -18,10 +14,11 @@ type Client struct {
 	send chan []byte
 }
 
-func (c *Client) read() {
+func (c *Client) Read() {
 	defer func() {
 		c.hub.unregister <- c
 		c.conn.Close()
+		log.Print("disconnected")
 	}()
 
 	for {
@@ -36,7 +33,7 @@ func (c *Client) read() {
 	}
 }
 
-func (c *Client) write() {
+func (c *Client) Write() {
 	defer func() {
 		c.conn.Close()
 	}()
