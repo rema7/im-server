@@ -1,16 +1,15 @@
 package main
 
 import (
-	"github.com/gorilla/websocket"
+	manager "im-server/hub"
 	"log"
 	"net/http"
-	manager "im/hub"
+
+	"github.com/gorilla/websocket"
 )
 
-
-
 var upgrader = websocket.Upgrader{
-	CheckOrigin: func(r *http.Request) bool { return true },
+	CheckOrigin:     func(r *http.Request) bool { return true },
 	ReadBufferSize:  1024,
 	WriteBufferSize: 1024,
 }
@@ -26,8 +25,6 @@ func handleConnections(hub *manager.Hub, w http.ResponseWriter, r *http.Request)
 	hub.Register(conn)
 }
 
-
-
 func main() {
 	fs := http.FileServer(http.Dir("../public"))
 	http.Handle("/", fs)
@@ -35,11 +32,9 @@ func main() {
 	hub := manager.NewHub()
 	go hub.Run()
 
-	http.HandleFunc("/ws",  func(w http.ResponseWriter, r *http.Request) {
+	http.HandleFunc("/ws", func(w http.ResponseWriter, r *http.Request) {
 		handleConnections(hub, w, r)
 	})
-
-	//go handleMessages()
 
 	log.Println("http server started on :8100")
 

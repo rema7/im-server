@@ -1,15 +1,15 @@
 package hub
 
 import (
-	"github.com/gorilla/websocket"
 	"encoding/json"
 	"log"
+
+	"github.com/gorilla/websocket"
 )
 
-
 type Client struct {
-	id     string
-	hub *Hub
+	id   string
+	hub  *Hub
 	conn *websocket.Conn
 	send chan []byte
 }

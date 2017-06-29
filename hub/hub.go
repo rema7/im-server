@@ -2,29 +2,30 @@ package hub
 
 import (
 	"encoding/json"
-	"github.com/satori/go.uuid"
+
 	"github.com/gorilla/websocket"
+	"github.com/satori/go.uuid"
 )
 
 type Hub struct {
-	clients	map[*Client]bool
-	register  chan *Client
-	unregister  chan *Client
+	clients    map[*Client]bool
+	register   chan *Client
+	unregister chan *Client
 	broadcast  chan []byte
-
 }
 
 func NewHub() *Hub {
 	return &Hub{
 		broadcast:  make(chan []byte),
-		clients: make(map[*Client]bool),
+		clients:    make(map[*Client]bool),
 		register:   make(chan *Client),
-		unregister:   make(chan *Client),
+		unregister: make(chan *Client),
 	}
 }
 
-func (hub *Hub) Register(conn * websocket.Conn) {
+func (hub *Hub) Register(conn *websocket.Conn) {
 	client := &Client{id: uuid.NewV4().String(), conn: conn, send: make(chan []byte), hub: hub}
+
 	go client.Read()
 	go client.Write()
 
@@ -34,7 +35,7 @@ func (hub *Hub) Register(conn * websocket.Conn) {
 func (hub *Hub) Run() {
 	for {
 		select {
-		case client := <- hub.register:
+		case client := <-hub.register:
 			hub.clients[client] = true
 			jsonMessage, _ := json.Marshal(&Message{Content: "/A new socket has connected."})
 			hub.Send(jsonMessage, client)
