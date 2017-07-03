@@ -6,3 +6,8 @@ type Message struct {
 	Recipient string `json:"recipient,omitempty"`
 	Content   string `json:"content,omitempty"`
 }
+
+type Packet struct {
+	Token   string  `json:"token"`
+	Message Message `json:"message,omitempty"`
+}

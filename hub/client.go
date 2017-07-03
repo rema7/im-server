@@ -28,6 +28,7 @@ func (c *Client) Read() {
 			c.conn.Close()
 			break
 		}
+		// json.Unmarshal()
 		jsonMessage, _ := json.Marshal(Message{Type: "CHAT_MESSAGE", Sender: c.id, Content: string(message)})
 		c.hub.broadcast <- jsonMessage
 	}
