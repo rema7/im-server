@@ -1,8 +1,6 @@
 package hub
 
 import (
-	"encoding/json"
-
 	"github.com/gorilla/websocket"
 	"github.com/satori/go.uuid"
 )
@@ -37,14 +35,14 @@ func (hub *Hub) Run() {
 		select {
 		case client := <-hub.register:
 			hub.clients[client] = true
-			jsonMessage, _ := json.Marshal(&Message{Content: "/A new socket has connected."})
-			hub.Send(jsonMessage, client)
+			// jsonMessage, _ := json.Marshal(&Message{Content: "/A new socket has connected."})
+			// hub.Send(jsonMessage, client)
 		case conn := <-hub.unregister:
 			if _, ok := hub.clients[conn]; ok {
 				close(conn.send)
 				delete(hub.clients, conn)
-				jsonMessage, _ := json.Marshal(&Message{Content: "/A socket has disconnected."})
-				hub.Send(jsonMessage, conn)
+				// jsonMessage, _ := json.Marshal(&Message{Content: "/A socket has disconnected."})
+				// hub.Send(jsonMessage, conn)
 			}
 
 		case message := <-hub.broadcast:
@@ -60,10 +58,10 @@ func (hub *Hub) Run() {
 	}
 }
 
-func (hub *Hub) Send(message []byte, ignore *Client) {
-	for conn := range hub.clients {
-		if conn != ignore {
-			conn.send <- message
-		}
-	}
-}
+// func (hub *Hub) Send(message []byte, ignore *Client) {
+// 	for conn := range hub.clients {
+// 		if conn != ignore {
+// 			conn.send <- message
+// 		}
+// 	}
+// }

@@ -14,6 +14,26 @@ type Client struct {
 	send chan []byte
 }
 
+func (Client) decodeMessage(data []byte) (Packet, error) {
+	var p Packet
+	err := json.Unmarshal(data, &p)
+
+	if err != nil {
+		return Packet{}, err
+	}
+
+	return p, nil
+}
+
+func (c Client) encodeMessage(messageType string, message Message) ([]byte, error) {
+	result, err := json.Marshal(Message{Type: messageType, Sender: c.id, Content: message.Content})
+	if err != nil {
+		return nil, err
+	}
+
+	return result, nil
+}
+
 func (c *Client) Read() {
 	defer func() {
 		c.hub.unregister <- c
@@ -22,14 +42,19 @@ func (c *Client) Read() {
 	}()
 
 	for {
-		_, message, err := c.conn.ReadMessage()
+		_, data, err := c.conn.ReadMessage()
 		if err != nil {
 			c.hub.unregister <- c
 			c.conn.Close()
 			break
 		}
-		// json.Unmarshal()
-		jsonMessage, _ := json.Marshal(Message{Type: "CHAT_MESSAGE", Sender: c.id, Content: string(message)})
+
+		packet, err := c.decodeMessage(data)
+		if err != nil {
+			println(err)
+		}
+
+		jsonMessage, _ := c.encodeMessage("CHAT_MESSAGE", packet.Message)
 		c.hub.broadcast <- jsonMessage
 	}
 }
