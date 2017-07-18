@@ -2,13 +2,14 @@ package hub
 
 import (
 	"encoding/json"
+	"im-server/cache"
 	"log"
 
 	"github.com/gorilla/websocket"
 )
 
 type Client struct {
-	id   string
+	id   int
 	hub  *Hub
 	conn *websocket.Conn
 	send chan []byte
@@ -26,7 +27,12 @@ func (Client) decodeMessage(data []byte) (Packet, error) {
 }
 
 func (c Client) encodeMessage(messageType string, message Message) ([]byte, error) {
-	result, err := json.Marshal(Message{Type: messageType, Sender: c.id, Content: message.Content})
+	result, err := json.Marshal(Message{
+		Type:    messageType,
+		ChatID:  message.ChatID,
+		Sender:  c.id,
+		Content: message.Content,
+	})
 	if err != nil {
 		return nil, err
 	}
@@ -54,7 +60,19 @@ func (c *Client) Read() {
 			println(err)
 		}
 
-		jsonMessage, _ := c.encodeMessage("CHAT_MESSAGE", packet.Message)
+		redis := cache.Cache{}
+		redis.Init()
+		senderID, err := redis.GetUserId(packet.Token)
+		var jsonMessage []byte
+
+		if err != nil {
+			log.Println(err)
+			jsonMessage, _ = c.encodeMessage("ERROR_MESSAGE", packet.Message)
+		} else {
+			c.id = senderID
+			jsonMessage, _ = c.encodeMessage("CHAT_MESSAGE", packet.Message)
+		}
+
 		c.hub.broadcast <- jsonMessage
 	}
 }

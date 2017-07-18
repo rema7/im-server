@@ -2,7 +2,6 @@ package hub
 
 import (
 	"github.com/gorilla/websocket"
-	"github.com/satori/go.uuid"
 )
 
 type Hub struct {
@@ -22,7 +21,7 @@ func NewHub() *Hub {
 }
 
 func (hub *Hub) Register(conn *websocket.Conn) {
-	client := &Client{id: uuid.NewV4().String(), conn: conn, send: make(chan []byte), hub: hub}
+	client := &Client{id: -1, conn: conn, send: make(chan []byte), hub: hub}
 
 	go client.Read()
 	go client.Write()
