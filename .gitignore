@@ -25,3 +25,4 @@ vendor/
 .DS_Store
 Gopkg.lock
 Gopkg.toml
+.vscode

@@ -73,7 +73,7 @@ func (c *Client) Read() {
 			jsonMessage, _ = c.encodeMessage("CHAT_MESSAGE", packet.Message)
 		}
 
-		c.hub.broadcast <- jsonMessage
+		c.hub.broadcast <- Result{c.id, jsonMessage}
 	}
 }
 
