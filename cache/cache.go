@@ -1,6 +1,7 @@
 package cache
 
 import (
+	"encoding/json"
 	"log"
 	"strconv"
 	"sync"
@@ -46,4 +47,16 @@ func (c Cache) GetUserId(session string) (int, error) {
 	}
 
 	return strconv.Atoi(val)
+}
+
+func (c Cache) GetChats(userId string) ([]int, error) {
+	val, err := c.client.Get(userId).Result()
+
+	if err != nil {
+		return nil, err
+	}
+
+	var ints []int
+	json.Unmarshal([]byte(val), &ints)
+	return ints, nil
 }

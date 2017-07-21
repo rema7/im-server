@@ -1,6 +1,7 @@
 package main
 
 import (
+	"im-server/cache"
 	manager "im-server/hub"
 	"log"
 	"net/http"
@@ -26,6 +27,8 @@ func handleConnections(hub *manager.Hub, w http.ResponseWriter, r *http.Request)
 }
 
 func main() {
+	x := cache.GetCache()
+	x.GetChats("user_1")
 	fs := http.FileServer(http.Dir("../public"))
 	http.Handle("/", fs)
 
