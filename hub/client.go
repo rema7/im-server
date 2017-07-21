@@ -15,24 +15,23 @@ type Client struct {
 	send chan []byte
 }
 
-func (Client) decodeMessage(data []byte) (Packet, error) {
-	var p Packet
+func (Client) decodeMessage(data []byte) (RequestMessage, error) {
+	var p RequestMessage
 	err := json.Unmarshal(data, &p)
 
 	if err != nil {
-		return Packet{}, err
+		return RequestMessage{}, err
 	}
 
 	return p, nil
 }
 
-func (c Client) encodeMessage(messageType string, message Message) ([]byte, error) {
-	result, err := json.Marshal(Message{
+func (c Client) encodeMessage(messageType string, payload interface{}) ([]byte, error) {
+	result, err := json.Marshal(ResponseMessage{
 		Type:    messageType,
-		ChatID:  message.ChatID,
-		Sender:  c.id,
-		Content: message.Content,
+		Payload: payload,
 	})
+
 	if err != nil {
 		return nil, err
 	}
@@ -55,24 +54,37 @@ func (c *Client) Read() {
 			break
 		}
 
-		packet, err := c.decodeMessage(data)
+		message, err := c.decodeMessage(data)
 		if err != nil {
 			println(err)
 		}
 
-		redis := cache.Cache{}
-		redis.Init()
-		senderID, err := redis.GetUserId(packet.Token)
+		redis := cache.GetCache()
+		senderID, err := redis.GetUserId(message.Token)
 		var jsonMessage []byte
-
 		if err != nil {
-			log.Println(err)
-			jsonMessage, _ = c.encodeMessage("ERROR_MESSAGE", packet.Message)
+			jsonMessage, _ = c.encodeMessage("ERROR_MESSAGE", ErrorMessage{
+				Content: "No id in cache",
+			})
+			c.hub.unregister <- c
 		} else {
 			c.id = senderID
-			jsonMessage, _ = c.encodeMessage("CHAT_MESSAGE", packet.Message)
+			if message.Type == "CHAT_MESSAGE" {
+				var chatMessage ChatMessage
+				err := json.Unmarshal([]byte(message.Payload), &chatMessage)
+				if err != nil {
+					jsonMessage, _ = c.encodeMessage("ERROR_MESSAGE", ErrorMessage{
+						Content: "Bad CHAT_MESSAGE body",
+					})
+				} else {
+					jsonMessage, _ = c.encodeMessage(message.Type, ChatMessage{
+						Sender:  senderID,
+						ChatID:  chatMessage.ChatID,
+						Content: chatMessage.Content,
+					})
+				}
+			}
 		}
-
 		c.hub.broadcast <- Result{c.id, jsonMessage}
 	}
 }

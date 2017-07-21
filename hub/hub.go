@@ -47,13 +47,11 @@ func (hub *Hub) Run() {
 
 		case result := <-hub.broadcast:
 			for conn := range hub.clients {
-				if conn.id != result.id {
-					select {
-					case conn.send <- result.message:
-					default:
-						close(conn.send)
-						delete(hub.clients, conn)
-					}
+				select {
+				case conn.send <- result.message:
+				default:
+					close(conn.send)
+					delete(hub.clients, conn)
 				}
 			}
 		}

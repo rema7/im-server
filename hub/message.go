@@ -1,13 +1,24 @@
 package hub
 
-type Message struct {
+import "encoding/json"
+
+type ErrorMessage struct {
+	Content string `json:"content,omitempty"`
+}
+
+type ChatMessage struct {
 	ChatID  int    `json:"chat_id"`
-	Type    string `json:"type,omitempty"`
 	Sender  int    `json:"sender_id,omitempty"`
 	Content string `json:"content,omitempty"`
 }
 
-type Packet struct {
-	Token   string  `json:"token"`
-	Message Message `json:"message,omitempty"`
+type RequestMessage struct {
+	Token   string          `json:"token,omitempty"`
+	Type    string          `json:"type,omitempty"`
+	Payload json.RawMessage `json:"payload"`
+}
+
+type ResponseMessage struct {
+	Type    string      `json:"type,omitempty"`
+	Payload interface{} `json:"payload"`
 }

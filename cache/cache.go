@@ -3,9 +3,24 @@ package cache
 import (
 	"log"
 	"strconv"
+	"sync"
 
 	"github.com/go-redis/redis"
 )
+
+var (
+	instance *Cache
+	once     sync.Once
+)
+
+func GetCache() *Cache {
+	once.Do(func() {
+		redis := Cache{}
+		redis.Init()
+		instance = &redis
+	})
+	return instance
+}
 
 type Cache struct {
 	client *redis.Client
