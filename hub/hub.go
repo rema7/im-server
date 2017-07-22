@@ -5,7 +5,7 @@ import (
 )
 
 type Result struct {
-	id      int
+	ids     []int
 	message []byte
 }
 
@@ -25,8 +25,8 @@ func NewHub() *Hub {
 	}
 }
 
-func (hub *Hub) Register(conn *websocket.Conn) {
-	client := &Client{id: -1, conn: conn, send: make(chan []byte), hub: hub}
+func (hub *Hub) Register(conn *websocket.Conn, id int64) {
+	client := &Client{id: id, conn: conn, send: make(chan []byte), hub: hub}
 
 	go client.Read()
 	go client.Write()
@@ -46,12 +46,18 @@ func (hub *Hub) Run() {
 			}
 
 		case result := <-hub.broadcast:
-			for conn := range hub.clients {
-				select {
-				case conn.send <- result.message:
-				default:
-					close(conn.send)
-					delete(hub.clients, conn)
+			for _, id := range result.ids {
+				println(id)
+				for conn := range hub.clients {
+					println(conn.id)
+					if int64(id) == conn.id {
+						select {
+						case conn.send <- result.message:
+						default:
+							close(conn.send)
+							delete(hub.clients, conn)
+						}
+					}
 				}
 			}
 		}

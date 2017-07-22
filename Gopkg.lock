@@ -2,6 +2,12 @@
 
 
 [[projects]]
+  name = "github.com/go-pg/pg"
+  packages = [".","internal","internal/parser","internal/pool","orm","types"]
+  revision = "42b5c52925b5960a9df816a4660f5bf3b1524d16"
+  version = "v6.4.6"
+
+[[projects]]
   name = "github.com/go-redis/redis"
   packages = [".","internal","internal/consistenthash","internal/hashtag","internal/pool","internal/proto"]
   revision = "da63fe7def48e378caf9539abf64b9b1e37bc01e"
@@ -13,9 +19,15 @@
   revision = "ea4d1f681babbce9545c9c5f3d5194a789c89f5b"
   version = "v1.2.0"
 
+[[projects]]
+  branch = "master"
+  name = "github.com/jinzhu/inflection"
+  packages = ["."]
+  revision = "1c35d901db3da928c72a72d8458480cc9ade058f"
+
 [solve-meta]
   analyzer-name = "dep"
   analyzer-version = 1
-  inputs-digest = "e566ce8365cdedf75c4b0ace4083b18b99dd8b4a68793b1f8c46ca8f5912a43a"
+  inputs-digest = "17429ab31d073b179dd19eaff1dccdd1a30d69093d59428d204651d7461cc07f"
   solver-name = "gps-cdcl"
   solver-version = 1

@@ -39,14 +39,14 @@ func (c *Cache) Init() {
 	}
 }
 
-func (c Cache) GetUserId(session string) (int, error) {
+func (c Cache) GetUserId(session string) (int64, error) {
 	val, err := c.client.Get(session).Result()
 
 	if err != nil {
 		return -1, err
 	}
 
-	return strconv.Atoi(val)
+	return strconv.ParseInt(val, 10, 64)
 }
 
 func (c Cache) GetChats(userId string) ([]int, error) {

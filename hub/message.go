@@ -7,13 +7,12 @@ type ErrorMessage struct {
 }
 
 type ChatMessage struct {
-	ChatID  int    `json:"chat_id"`
-	Sender  int    `json:"sender_id,omitempty"`
+	ChatID  int64  `json:"chat_id"`
+	Sender  int64  `json:"sender_id,omitempty"`
 	Content string `json:"content,omitempty"`
 }
 
 type RequestMessage struct {
-	Token   string          `json:"token,omitempty"`
 	Type    string          `json:"type,omitempty"`
 	Payload json.RawMessage `json:"payload"`
 }

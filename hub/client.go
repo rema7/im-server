@@ -2,14 +2,14 @@ package hub
 
 import (
 	"encoding/json"
-	"im-server/cache"
+	"im-server/db"
 	"log"
 
 	"github.com/gorilla/websocket"
 )
 
 type Client struct {
-	id   int
+	id   int64
 	hub  *Hub
 	conn *websocket.Conn
 	send chan []byte
@@ -59,16 +59,14 @@ func (c *Client) Read() {
 			println(err)
 		}
 
-		redis := cache.GetCache()
-		senderID, err := redis.GetUserId(message.Token)
 		var jsonMessage []byte
+		var memberIds = []int{}
 		if err != nil {
 			jsonMessage, _ = c.encodeMessage("ERROR_MESSAGE", ErrorMessage{
 				Content: "No id in cache",
 			})
 			c.hub.unregister <- c
 		} else {
-			c.id = senderID
 			if message.Type == "CHAT_MESSAGE" {
 				var chatMessage ChatMessage
 				err := json.Unmarshal([]byte(message.Payload), &chatMessage)
@@ -77,15 +75,27 @@ func (c *Client) Read() {
 						Content: "Bad CHAT_MESSAGE body",
 					})
 				} else {
+					session := db.GetDbSession()
+					var chatID int
+					chatMember := db.ChatMember{}
+					err := session.Model(&chatMember).Column("chat_id").Where("chat_id = ?", chatMessage.ChatID).Where("user_id = ?", c.id).Select(&chatID)
+					if err != nil {
+						log.Println(err)
+					}
+					err = session.Model(&chatMember).Column("user_id").Where("chat_id = ?", chatMessage.ChatID).Where("user_id != ?", c.id).Select(&memberIds)
+					if err != nil {
+						log.Println(err)
+						return
+					}
 					jsonMessage, _ = c.encodeMessage(message.Type, ChatMessage{
-						Sender:  senderID,
+						Sender:  c.id,
 						ChatID:  chatMessage.ChatID,
 						Content: chatMessage.Content,
 					})
 				}
 			}
 		}
-		c.hub.broadcast <- Result{c.id, jsonMessage}
+		c.hub.broadcast <- Result{memberIds, jsonMessage}
 	}
 }
 
