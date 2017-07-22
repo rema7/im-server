@@ -1,6 +1,7 @@
 package main
 
 import (
+	"im-server/cache"
 	manager "im-server/hub"
 	"log"
 	"net/http"
@@ -15,14 +16,30 @@ var upgrader = websocket.Upgrader{
 }
 
 func handleConnections(hub *manager.Hub, w http.ResponseWriter, r *http.Request) {
+	token := r.URL.Query()["token"]
+
+	if len(token) == 0 {
+		http.Error(w, "Not authorized", 401)
+		return
+	}
+
+	redis := cache.GetCache()
+	id, err := redis.GetUserId(token[0])
+	if err != nil {
+		log.Println(err)
+		http.Error(w, "Not authorized", 401)
+		return
+	}
+
 	conn, err := upgrader.Upgrade(w, r, nil)
 	if err != nil {
 		log.Println(err)
+		http.Error(w, "Internal error", 500)
 		return
 	}
 
 	log.Println("new connection")
-	hub.Register(conn)
+	hub.Register(conn, id)
 }
 
 func main() {
